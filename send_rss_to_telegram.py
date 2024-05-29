@@ -38,6 +38,14 @@ def send_rss_to_telegram():
         title = entry.title
         link = entry.link
         description = entry.description
+         # Use BeautifulSoup to extract text from HTML description and filter out unsupported tags
+            soup = BeautifulSoup(description, 'html.parser')
+            supported_tags = ['b', 'i', 'a']  # Supported tags: bold, italic, anchor
+            # Filter out unsupported tags
+            for tag in soup.find_all():
+                if tag.name not in supported_tags:
+                    tag.decompose()
+            description_text = soup.get_text()
         publish_date = time.mktime(entry.published_parsed)  # Convert published date to timestamp
         # Compare the publish date with the timestamp of the last message
         if publish_date > last_message_timestamp:
