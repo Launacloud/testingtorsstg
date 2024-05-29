@@ -5,7 +5,7 @@ import json
 
 # Load environment variables
 TELEGRAM_BOT_TOKEN = os.getenv('TELEGRAM_BOT_TOKEN')
-RSS_FEED_URL = os.getenv('RSS_FEED')
+RSS_FEED_URL = os.getenv('RSS_FEED_URL')
 CHAT_ID = os.getenv('TELEGRAM_CHAT_ID')
 CACHE_FILE = 'sent_messages_cache.json'
 
