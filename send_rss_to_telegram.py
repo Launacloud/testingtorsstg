@@ -9,6 +9,10 @@ RSS_FEED_URL = os.getenv('RSS_FEED_URL')
 CHAT_ID = os.getenv('TELEGRAM_CHAT_ID')
 CACHE_FILE = 'sent_messages_cache.json'
 
+# Check if all necessary environment variables are set
+if not TELEGRAM_BOT_TOKEN or not RSS_FEED_URL or not CHAT_ID:
+    raise ValueError("Please set the TELEGRAM_BOT_TOKEN, RSS_FEED_URL, and TELEGRAM_CHAT_ID environment variables.")
+
 # Function to send a message to a Telegram chat
 def send_telegram_message(message):
     url = f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/sendMessage"
@@ -19,8 +23,27 @@ def send_telegram_message(message):
         'disable_web_page_preview': 'false'  # Enable link previews
     }
     response = requests.post(url, data=payload)
+    print(f"Sending message to Telegram: {message}")  # Debug: print message being sent
+    print(f"Response status code: {response.status_code}")  # Debug: print status code
+    print(f"Response text: {response.text}")  # Debug: print response text
     if response.status_code != 200:
         raise Exception(f"Error sending message: {response.text}")
+
+# Function to get the latest updates from the bot
+def get_telegram_updates():
+    url = f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/getUpdates"
+    response = requests.get(url)
+    if response.status_code != 200:
+        raise Exception(f"Error getting updates: {response.text}")
+    return response.json()
+
+# Function to check if a message has already been sent
+def message_already_sent(message_id):
+    updates = get_telegram_updates()
+    for result in updates['result']:
+        if 'message' in result and result['message']['message_id'] == message_id:
+            return True
+    return False
 
 # Function to load sent message IDs from cache
 def load_sent_message_ids():
@@ -50,14 +73,14 @@ def send_rss_to_telegram():
             title = entry.title
             link = entry.get('link', entry.get('url'))  # Get link or url
             description = entry.get('content_html', entry.get('description'))  # Get content_html or description
-            
+
             # Use link for both link and description if either is missing
-            message = f"<b>{title}</b>\n{link}\n\n{link}"  
+            message = f"<b>{title}</b>\n{link}\n\n{description}"
 
             # Print out the details of the entry
             print("Title:", title)
             print("Link:", link)
-            print("Description:", description)  # Print link as description
+            print("Description:", description)
 
             # Send the message to Telegram
             send_telegram_message(message)
