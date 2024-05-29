@@ -24,6 +24,8 @@ jobs:
         python -m pip install --upgrade pip
         pip install requests
         pip install feedparser
+        pip install unescape
+        pip install BeautifulSoup
 
     - name: Run script
       env:
