@@ -44,7 +44,7 @@ def send_rss_to_telegram():
     sent_message_ids = load_sent_message_ids()
     new_sent_message_ids = []
 
-    for entry in feed.entries:
+for entry in feed.entries:
     entry_id = entry.id
     if entry_id not in sent_message_ids:
         title = entry.title
@@ -69,9 +69,11 @@ def send_rss_to_telegram():
         if len(new_sent_message_ids) >= 20:
             break
 
-    # Update the cache with the new sent message IDs
-    save_sent_message_ids(sent_message_ids + new_sent_message_ids)
-    print("Sent message IDs saved to cache.")
+# Update the cache with the new sent message IDs
+save_sent_message_ids(sent_message_ids + new_sent_message_ids)
+print("Sent message IDs saved to cache.")
+        # Append the entry ID to the list of sent message IDs
+        new_sent_message_ids.append(entry_id)
 
 if __name__ == "__main__":
     print("Starting the RSS to Telegram script.")
