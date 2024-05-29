@@ -44,6 +44,12 @@ def send_rss_to_telegram():
     sent_message_ids = load_sent_message_ids()
     new_sent_message_ids = []
 
+   # Function to parse the RSS feed and send new entries to Telegram
+def send_rss_to_telegram():
+    feed = feedparser.parse(RSS_FEED_URL)
+    sent_message_ids = load_sent_message_ids()
+    new_sent_message_ids = []
+
     for entry in feed.entries:
         entry_id = entry.id
         if entry_id not in sent_message_ids:
@@ -51,8 +57,18 @@ def send_rss_to_telegram():
             link = entry.link
             description = entry.content_html  # Change 'summary' to 'description'
             message = f"<b>{title}</b>\n{link}\n\n{description}"  # Added description to the message
+            
+            # Print out the details of the entry
+            print("Title:", title)
+            print("Link:", link)
+            print("Description:", description)
+            
+            # Send the message to Telegram
             send_telegram_message(message)
+            
+            # Append the entry ID to the list of sent message IDs
             new_sent_message_ids.append(entry_id)
+            
             # To avoid sending too many messages at once, we can break after sending a few messages.
             if len(new_sent_message_ids) >= 20:
                 break
