@@ -2,16 +2,14 @@ import os
 import requests
 import feedparser
 import json
+from html import unescape
+from bs4 import BeautifulSoup
 
 # Load environment variables
 TELEGRAM_BOT_TOKEN = os.getenv('TELEGRAM_BOT_TOKEN')
 RSS_FEED_URL = os.getenv('RSS_FEED_URL')
 CHAT_ID = os.getenv('TELEGRAM_CHAT_ID')
 CACHE_FILE = 'sent_messages_cache.json'
-
-# Check if all necessary environment variables are set
-if not TELEGRAM_BOT_TOKEN or not RSS_FEED_URL or not CHAT_ID:
-    raise ValueError("Please set the TELEGRAM_BOT_TOKEN, RSS_FEED_URL, and TELEGRAM_CHAT_ID environment variables.")
 
 # Function to send a message to a Telegram chat
 def send_telegram_message(message):
@@ -23,9 +21,8 @@ def send_telegram_message(message):
         'disable_web_page_preview': 'false'  # Enable link previews
     }
     response = requests.post(url, data=payload)
-    print(f"Sending message to Telegram: {message}")  # Debug: print message being sent
-    print(f"Response status code: {response.status_code}")  # Debug: print status code
-    print(f"Response text: {response.text}")  # Debug: print response text
+    print(f"Response status code: {response.status_code}")
+    print(f"Response text: {response.text}")
     if response.status_code != 200:
         raise Exception(f"Error sending message: {response.text}")
 
@@ -61,6 +58,15 @@ def save_sent_message_ids(sent_message_ids):
     with open(CACHE_FILE, 'w') as f:
         json.dump(sent_message_ids, f)
 
+# Function to clean HTML content and keep only allowed tags
+def clean_html(html):
+    soup = BeautifulSoup(html, 'html.parser')
+    allowed_tags = ['b', 'i', 'u', 'a', 'code', 'pre']
+    for tag in soup.find_all():
+        if tag.name not in allowed_tags:
+            tag.unwrap()
+    return unescape(str(soup))
+
 # Function to parse the RSS feed and send new entries to Telegram
 def send_rss_to_telegram():
     feed = feedparser.parse(RSS_FEED_URL)
@@ -74,13 +80,16 @@ def send_rss_to_telegram():
             link = entry.get('link', entry.get('url'))  # Get link or url
             description = entry.get('content_html', entry.get('description'))  # Get content_html or description
 
+            # Clean the description from unsupported HTML tags
+            clean_description = clean_html(description)
+
             # Use link for both link and description if either is missing
-            message = f"<b>{title}</b>\n{link}\n\n{description}"
+            message = f"<b>{title}</b>\n{link}\n\n{clean_description}"
 
             # Print out the details of the entry
             print("Title:", title)
             print("Link:", link)
-            print("Description:", description)
+            print("Description:", clean_description)
 
             # Send the message to Telegram
             send_telegram_message(message)
