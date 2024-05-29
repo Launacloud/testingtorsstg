@@ -35,8 +35,8 @@ def send_rss_to_telegram():
         last_message_timestamp = time.mktime(feed.entries[0].published_parsed)
     for entry in feed.entries:
         title = entry.title
-        link = entry.link
-        description = entry.description
+        link = entry.get('link', entry.get('url'))  # Get link or url
+        description = entry.get('content_html', entry.get('description'))  # Get content_html or description
         publish_date = time.mktime(entry.published_parsed)  # Convert published date to timestamp
         # Compare the publish date with the timestamp of the last message
         if publish_date > last_message_timestamp:
