@@ -45,27 +45,29 @@ def send_rss_to_telegram():
     new_sent_message_ids = []
 
     for entry in feed.entries:
-        entry_id = entry.id
-        if entry_id not in sent_message_ids:
-            title = entry.title
-            link = entry.link
-            description = entry.content_html  # Change 'summary' to 'description'
-            message = f"<b>{title}</b>\n{link}\n\n{description}"  # Added description to the message
-            
-            # Print out the details of the entry
-            print("Title:", title)
-            print("Link:", link)
-            print("Description:", description)
-            
-            # Send the message to Telegram
-            send_telegram_message(message)
-            
-            # Append the entry ID to the list of sent message IDs
-            new_sent_message_ids.append(entry_id)
-            
-            # To avoid sending too many messages at once, we can break after sending a few messages.
-            if len(new_sent_message_ids) >= 20:
-                break
+    entry_id = entry.id
+    if entry_id not in sent_message_ids:
+        title = entry.title
+        link = entry.get('link', entry.get('url'))  # Get link or url
+        description = entry.get('content_html', entry.get('description'))  # Get content_html or description
+        
+        # Use link for both link and description if either is missing
+        message = f"<b>{title}</b>\n{link}\n\n{link}"  
+
+        # Print out the details of the entry
+        print("Title:", title)
+        print("Link:", link)
+        print("Description:", link)  # Print link as description
+
+        # Send the message to Telegram
+        send_telegram_message(message)
+
+        # Append the entry ID to the list of sent message IDs
+        new_sent_message_ids.append(entry_id)
+
+        # To avoid sending too many messages at once, we can break after sending a few messages.
+        if len(new_sent_message_ids) >= 20:
+            break
 
     # Update the cache with the new sent message IDs
     save_sent_message_ids(sent_message_ids + new_sent_message_ids)
