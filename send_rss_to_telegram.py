@@ -13,7 +13,7 @@ CACHE_FILE = 'sent_messages_cache.json'
 def send_telegram_message(message):
     url = f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/sendMessage"
     payload = {
-        'chat_id': TELEGRAM_CHAT_ID,
+        'chat_id': CHAT_ID,
         'text': message,
         'parse_mode': 'HTML',
         'disable_web_page_preview': 'false'  # Enable link previews
@@ -44,36 +44,34 @@ def send_rss_to_telegram():
     sent_message_ids = load_sent_message_ids()
     new_sent_message_ids = []
 
-for entry in feed.entries:
-    entry_id = entry.id
-    if entry_id not in sent_message_ids:
-        title = entry.title
-        link = entry.get('link', entry.get('url'))  # Get link or url
-        description = entry.get('content_html', entry.get('description'))  # Get content_html or description
-        
-        # Use link for both link and description if either is missing
-        message = f"<b>{title}</b>\n{link}\n\n{link}"  
+    for entry in feed.entries:
+        entry_id = entry.id
+        if entry_id not in sent_message_ids:
+            title = entry.title
+            link = entry.get('link', entry.get('url'))  # Get link or url
+            description = entry.get('content_html', entry.get('description'))  # Get content_html or description
+            
+            # Use link for both link and description if either is missing
+            message = f"<b>{title}</b>\n{link}\n\n{link}"  
 
-        # Print out the details of the entry
-        print("Title:", title)
-        print("Link:", link)
-        print("Description:", link)  # Print link as description
+            # Print out the details of the entry
+            print("Title:", title)
+            print("Link:", link)
+            print("Description:", link)  # Print link as description
 
-        # Send the message to Telegram
-        send_telegram_message(message)
+            # Send the message to Telegram
+            send_telegram_message(message)
 
-        # Append the entry ID to the list of sent message IDs
-        new_sent_message_ids.append(entry_id)
+            # Append the entry ID to the list of sent message IDs
+            new_sent_message_ids.append(entry_id)
 
-        # To avoid sending too many messages at once, we can break after sending a few messages.
-        if len(new_sent_message_ids) >= 20:
-            break
+            # To avoid sending too many messages at once, we can break after sending a few messages.
+            if len(new_sent_message_ids) >= 20:
+                break
 
-# Update the cache with the new sent message IDs
-save_sent_message_ids(sent_message_ids + new_sent_message_ids)
-print("Sent message IDs saved to cache.")
-        # Append the entry ID to the list of sent message IDs
-        new_sent_message_ids.append(entry_id)
+    # Update the cache with the new sent message IDs
+    save_sent_message_ids(sent_message_ids + new_sent_message_ids)
+    print("Sent message IDs saved to cache.")
 
 if __name__ == "__main__":
     print("Starting the RSS to Telegram script.")
