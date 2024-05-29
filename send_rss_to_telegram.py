@@ -57,7 +57,7 @@ def send_rss_to_telegram():
             # Print out the details of the entry
             print("Title:", title)
             print("Link:", link)
-            print("Description:", link)  # Print link as description
+            print("Description:", description)  # Print link as description
 
             # Send the message to Telegram
             send_telegram_message(message)
