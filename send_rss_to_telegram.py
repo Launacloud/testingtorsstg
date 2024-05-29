@@ -44,12 +44,6 @@ def send_rss_to_telegram():
     sent_message_ids = load_sent_message_ids()
     new_sent_message_ids = []
 
-   # Function to parse the RSS feed and send new entries to Telegram
-def send_rss_to_telegram():
-    feed = feedparser.parse(RSS_FEED_URL)
-    sent_message_ids = load_sent_message_ids()
-    new_sent_message_ids = []
-
     for entry in feed.entries:
         entry_id = entry.id
         if entry_id not in sent_message_ids:
