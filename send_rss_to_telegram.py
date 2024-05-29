@@ -6,7 +6,7 @@ import json
 # Load environment variables
 TELEGRAM_BOT_TOKEN = os.getenv('TELEGRAM_BOT_TOKEN')
 RSS_FEED_URL = os.getenv('RSS_FEED')
-CHAT_ID = os.getenv('TELEGRAM_CHAT')
+CHAT_ID = os.getenv('TELEGRAM_CHAT_ID')
 CACHE_FILE = 'sent_messages_cache.json'
 
 # Function to send a message to a Telegram chat
