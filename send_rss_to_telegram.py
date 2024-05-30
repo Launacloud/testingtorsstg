@@ -28,6 +28,9 @@ def send_telegram_message(message):
 # Function to send RSS feed items to Telegram
 def send_rss_to_telegram():
     feed = feedparser.parse(RSS_FEED_URL)
+    for entry in feed.entries:
+        print(f"Feed item: {entry.title}")
+    return feed.entries
     last_message_timestamp = 0  # Initialize with a default value
     # Check if there are any entries in the feed
 print(f"...")
