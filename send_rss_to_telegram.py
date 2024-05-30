@@ -30,7 +30,8 @@ def send_rss_to_telegram():
     feed = feedparser.parse(RSS_FEED_URL)
     last_message_timestamp = 0  # Initialize with a default value
     # Check if there are any entries in the feed
-    if feed.entries:
+print(f"...")
+     if feed.entries:
         # Convert the timestamp of the most recent entry to seconds since epoch
         last_message_timestamp = time.mktime(feed.entries[0].published_parsed)
     for entry in feed.entries:
