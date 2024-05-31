@@ -2,28 +2,30 @@ import os
 import requests
 import feedparser
 import json
-import time
 from bs4 import BeautifulSoup
 
 # Load environment variables
 TELEGRAM_BOT_TOKEN = os.getenv('TELEGRAM_BOT_TOKEN')
 RSS_FEED_URL = os.getenv('RSS_FEED_URL')
 CHAT_ID = os.getenv('TELEGRAM_CHAT_ID')
-CACHE_DIR = os.getenv('GITHUB_WORKSPACE', '.') + '/cache'
-os.makedirs(CACHE_DIR, exist_ok=True)
-CACHE_FILE = os.path.join(CACHE_DIR, 'feed_cache.json')
+GITHUB_WORKSPACE = os.getenv('GITHUB_WORKSPACE', '.')
 
 # Path to store etag and modified information
-CACHE_DIR = os.getenv('GITHUB_WORKSPACE', '.') + '/cache'
-os.makedirs(CACHE_DIR, exist_ok=True)
+CACHE_DIR = os.path.join(GITHUB_WORKSPACE, 'cache')
 CACHE_FILE = os.path.join(CACHE_DIR, 'feed_cache.json')
+
+# Ensure cache directory and file exist
+def ensure_cache_file():
+    os.makedirs(CACHE_DIR, exist_ok=True)
+    if not os.path.exists(CACHE_FILE):
+        with open(CACHE_FILE, 'w') as f:
+            json.dump({}, f)
 
 # Function to load cache
 def load_cache():
-    if os.path.exists(CACHE_FILE):
-        with open(CACHE_FILE, 'r') as f:
-            return json.load(f)
-    return {}
+    ensure_cache_file()
+    with open(CACHE_FILE, 'r') as f:
+        return json.load(f)
 
 # Function to save cache
 def save_cache(cache):
