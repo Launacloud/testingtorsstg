@@ -10,13 +10,21 @@ RSS_FEED_URL = os.getenv('RSS_FEED_URL')
 CHAT_ID = os.getenv('TELEGRAM_CHAT_ID')
 GITHUB_WORKSPACE = os.getenv('GITHUB_WORKSPACE', '.')
 
-# Path to store etag and modified information
+
+# Cache file path
+CACHE_FILE = os.path.join(CACHE_DIR, 'feed_cache.json')
 CACHE_DIR = os.path.join(GITHUB_WORKSPACE, 'cache')
 CACHE_FILE = os.path.join(CACHE_DIR, 'feed_cache.json')
+# Path to store etag and modified information
+CACHE_DIR = '/tmp/cache'
+# Ensure cache directory exists
+os.makedirs(CACHE_DIR, exist_ok=True)
+
 
 # Ensure cache directory and file exist
 def ensure_cache_file():
     os.makedirs(CACHE_DIR, exist_ok=True)
+    print(f"Folder Ok")
     if not os.path.exists(CACHE_FILE):
         with open(CACHE_FILE, 'w') as f:
             json.dump({}, f)
