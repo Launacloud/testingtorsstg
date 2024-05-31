@@ -9,6 +9,9 @@ from bs4 import BeautifulSoup
 TELEGRAM_BOT_TOKEN = os.getenv('TELEGRAM_BOT_TOKEN')
 RSS_FEED_URL = os.getenv('RSS_FEED_URL')
 CHAT_ID = os.getenv('TELEGRAM_CHAT_ID')
+CACHE_DIR = os.getenv('GITHUB_WORKSPACE', '.') + '/cache'
+os.makedirs(CACHE_DIR, exist_ok=True)
+CACHE_FILE = os.path.join(CACHE_DIR, 'feed_cache.json')
 
 # Path to store etag and modified information
 CACHE_DIR = os.getenv('GITHUB_WORKSPACE', '.') + '/cache'
