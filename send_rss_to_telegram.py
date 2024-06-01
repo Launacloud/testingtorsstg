@@ -8,37 +8,40 @@ from bs4 import BeautifulSoup
 TELEGRAM_BOT_TOKEN = os.getenv('TELEGRAM_BOT_TOKEN')
 RSS_FEED_URL = os.getenv('RSS_FEED_URL')
 CHAT_ID = os.getenv('TELEGRAM_CHAT_ID')
-GITHUB_WORKSPACE = os.getenv('GITHUB_WORKSPACE', '.')
+GITHUB_WORKSPACE = os.getenv('GITHUB_WORKSPACE', '/tmp')
 
 
-# Cache file path
-CACHE_FILE = os.path.join(CACHE_DIR, 'feed_cache.json')
+# Set cache directory and file path
 CACHE_DIR = os.path.join(GITHUB_WORKSPACE, 'cache')
-CACHE_FILE = os.path.join(CACHE_DIR, 'feed_cache.json')
-# Path to store etag and modified information
-CACHE_DIR = '/tmp/cache'
-# Ensure cache directory exists
 os.makedirs(CACHE_DIR, exist_ok=True)
+CACHE_FILE = os.path.join(CACHE_DIR, 'feed_cache.json')
 
+print(f"Using cache directory: {CACHE_DIR}")
+print(f"Using cache file: {CACHE_FILE}")
 
 # Ensure cache directory and file exist
 def ensure_cache_file():
     os.makedirs(CACHE_DIR, exist_ok=True)
-    print(f"Folder Ok")
+    print(f"Cache directory ensured: {CACHE_DIR}")
     if not os.path.exists(CACHE_FILE):
         with open(CACHE_FILE, 'w') as f:
             json.dump({}, f)
+        print(f"Cache file created: {CACHE_FILE}")
+    else:
+        print(f"Cache file exists: {CACHE_FILE}")
 
 # Function to load cache
 def load_cache():
     ensure_cache_file()
     with open(CACHE_FILE, 'r') as f:
+        print(f"Loading cache from file: {CACHE_FILE}")
         return json.load(f)
 
 # Function to save cache
 def save_cache(cache):
     with open(CACHE_FILE, 'w') as f:
         json.dump(cache, f)
+    print(f"Cache saved to file: {CACHE_FILE}")
 
 # Function to send a message to a Telegram chat
 def send_telegram_message(message):
