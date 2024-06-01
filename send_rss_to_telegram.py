@@ -79,7 +79,7 @@ def send_rss_to_telegram():
 
     new_last_entry_id = last_entry_id
 
-    for entry in feed.entries:
+    for entry in reversed(feed.entries):  # Process entries in reverse order to handle newer entries first
         entry_id = entry.get('id')
         if last_entry_id and entry_id <= last_entry_id:
             continue
