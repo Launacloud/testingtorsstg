@@ -84,15 +84,21 @@ def send_rss_to_telegram():
     cache['etag'] = feed.get('etag')
     cache['modified'] = feed.get('modified')
 
-    new_last_entry_id = last_entry_id
-
-    for entry in reversed(feed.entries):  # Process entries in reverse order to handle newer entries first
+    new_entries = []
+    for entry in feed.entries:
         entry_id = entry.get('id', entry.get('link'))  # Use link if id is not present
         print(f"Processing entry with id: {entry_id}")
         if last_entry_id and entry_id <= last_entry_id:
             print(f"Skipping entry with id: {entry_id} as it is not newer than last_entry_id: {last_entry_id}")
             continue
+        new_entries.append(entry)
 
+    if not new_entries:
+        print("No new entries to process.")
+        return
+
+    for entry in reversed(new_entries):  # Process entries in reverse order to handle newer entries first
+        entry_id = entry.get('id', entry.get('link'))  # Use link if id is not present
         title = entry.title
         link = entry.get('link', entry.get('url'))  # Get link or url
         description = entry.get('content_html', entry.get('description'))  # Get content_html or description
@@ -109,10 +115,9 @@ def send_rss_to_telegram():
         send_telegram_message(message)
         print(f"Message sent: {title}")
 
-        if new_last_entry_id is None or entry_id > new_last_entry_id:
-            new_last_entry_id = entry_id
+        if entry_id > cache['last_entry_id']:
+            cache['last_entry_id'] = entry_id
 
-    cache['last_entry_id'] = new_last_entry_id
     save_cache(cache)
 
 # Main function
