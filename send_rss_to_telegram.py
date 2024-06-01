@@ -71,7 +71,7 @@ def send_rss_to_telegram():
     cache = load_cache()
     etag = cache.get('etag')
     modified = cache.get('modified')
-    last_entry_id = cache.get('last_entry_id')
+    last_entry_id = cache.get('last_entry_id', None)  # Initialize last_entry_id if not present
 
     print(f"Loading feed with etag: {etag} and modified: {modified}")
     feed = feedparser.parse(RSS_FEED_URL, etag=etag, modified=modified)
@@ -115,9 +115,10 @@ def send_rss_to_telegram():
         send_telegram_message(message)
         print(f"Message sent: {title}")
 
-        if entry_id > cache['last_entry_id']:
-            cache['last_entry_id'] = entry_id
+        if not last_entry_id or entry_id > last_entry_id:
+            last_entry_id = entry_id
 
+    cache['last_entry_id'] = last_entry_id
     save_cache(cache)
 
 # Main function
