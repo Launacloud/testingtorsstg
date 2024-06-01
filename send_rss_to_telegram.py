@@ -88,7 +88,9 @@ def send_rss_to_telegram():
 
     for entry in reversed(feed.entries):  # Process entries in reverse order to handle newer entries first
         entry_id = entry.get('id', entry.get('link'))  # Use link if id is not present
+        print(f"Processing entry with id: {entry_id}")
         if last_entry_id and entry_id <= last_entry_id:
+            print(f"Skipping entry with id: {entry_id} as it is not newer than last_entry_id: {last_entry_id}")
             continue
 
         title = entry.title
