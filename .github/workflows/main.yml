@@ -37,4 +37,4 @@ jobs:
         TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
         GITHUB_WORKSPACE: ${{ github.workspace }}
       run: |
-        python rss_to_telegram.py
+        python send_rss_to_telegram.py
