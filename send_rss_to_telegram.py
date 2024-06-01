@@ -116,4 +116,13 @@ def send_rss_to_telegram():
         print(f"Message sent: {title}")
 
         if last_entry_id and entry_id == last_entry_id:
-            print("Stopping script as last_entry_id matches current entry
+            print("Stopping script as last_entry_id matches current entry")
+            save_cache(cache)
+            return
+
+        # Main function
+        def main():
+            send_rss_to_telegram()
+
+        if __name__ == "__main__":
+            main()
