@@ -10,11 +10,12 @@ RSS_FEED_URL = os.getenv('RSS_FEED_URL')
 CHAT_ID = os.getenv('TELEGRAM_CHAT_ID')
 GITHUB_WORKSPACE = os.getenv('GITHUB_WORKSPACE', '/tmp')
 
-
 # Set cache directory and file path
 CACHE_DIR = os.path.join(GITHUB_WORKSPACE, 'cache')
-os.makedirs(CACHE_DIR, exist_ok=True)
 CACHE_FILE = os.path.join(CACHE_DIR, 'feed_cache.json')
+
+# Ensure cache directory exists
+os.makedirs(CACHE_DIR, exist_ok=True)
 
 print(f"Using cache directory: {CACHE_DIR}")
 print(f"Using cache file: {CACHE_FILE}")
@@ -63,23 +64,30 @@ def send_rss_to_telegram():
     cache = load_cache()
     etag = cache.get('etag')
     modified = cache.get('modified')
-    
+    last_entry_id = cache.get('last_entry_id')
+
+    print(f"Loading feed with etag: {etag} and modified: {modified}")
     feed = feedparser.parse(RSS_FEED_URL, etag=etag, modified=modified)
-    
+
     if feed.status == 304:
         print("No new entries.")
         return
-    
+
     # Update cache with new etag and modified values
     cache['etag'] = feed.get('etag')
     cache['modified'] = feed.get('modified')
-    save_cache(cache)
+
+    new_last_entry_id = last_entry_id
 
     for entry in feed.entries:
+        entry_id = entry.get('id')
+        if last_entry_id and entry_id <= last_entry_id:
+            continue
+
         title = entry.title
         link = entry.get('link', entry.get('url'))  # Get link or url
         description = entry.get('content_html', entry.get('description'))  # Get content_html or description
-        
+
         # Use BeautifulSoup to extract text from HTML description and filter out unsupported tags
         soup = BeautifulSoup(description, 'html.parser')
         supported_tags = ['b', 'i', 'a']  # Supported tags: bold, italic, anchor
@@ -91,6 +99,12 @@ def send_rss_to_telegram():
         message = f"<b>{title}</b>\n{link}\n\n{description_text}"
         send_telegram_message(message)
         print(f"Message sent: {title}")
+
+        if new_last_entry_id is None or entry_id > new_last_entry_id:
+            new_last_entry_id = entry_id
+
+    cache['last_entry_id'] = new_last_entry_id
+    save_cache(cache)
 
 # Main function
 def main():
