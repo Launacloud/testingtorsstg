@@ -43,6 +43,13 @@ def save_cache(cache):
     with open(CACHE_FILE, 'w') as f:
         json.dump(cache, f)
     print(f"Cache saved to file: {CACHE_FILE}")
+    print_cache()
+
+# Function to print cache
+def print_cache():
+    with open(CACHE_FILE, 'r') as f:
+        cache_content = json.load(f)
+        print(f"Cache content: {json.dumps(cache_content, indent=2)}")
 
 # Function to send a message to a Telegram chat
 def send_telegram_message(message):
@@ -80,7 +87,7 @@ def send_rss_to_telegram():
     new_last_entry_id = last_entry_id
 
     for entry in reversed(feed.entries):  # Process entries in reverse order to handle newer entries first
-        entry_id = entry.get('id')
+        entry_id = entry.get('id', entry.get('link'))  # Use link if id is not present
         if last_entry_id and entry_id <= last_entry_id:
             continue
 
