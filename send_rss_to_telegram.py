@@ -8,7 +8,7 @@ from bs4 import BeautifulSoup
 TELEGRAM_BOT_TOKEN = os.getenv('TELEGRAM_BOT_TOKEN')
 RSS_FEED_URL = os.getenv('RSS_FEED_URL')
 CHAT_ID = os.getenv('TELEGRAM_CHAT_ID')
-GITHUB_WORKSPACE = os.getenv('GITHUB_WORKSPACE', '/tmp')
+GITHUB_WORKSPACE = os.getenv('GITHUB_WORKSPACE', '')
 
 # Set cache directory and file path
 CACHE_DIR = os.path.join(GITHUB_WORKSPACE, 'cache')
@@ -19,7 +19,7 @@ os.makedirs(CACHE_DIR, exist_ok=True)
 
 print(f"Using cache directory: {CACHE_DIR}")
 print(f"Using cache file: {CACHE_FILE}")
-print(f"Cache content loaded: {cache}
+print(f"Cache content loaded: '{cache}'
 
 # Ensure cache directory and file exist
 def ensure_cache_file():
