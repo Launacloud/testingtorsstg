@@ -144,4 +144,4 @@ def main():
     send_rss_to_telegram()
 
 if __name__ == "__main__":
-    main()
+    main())
