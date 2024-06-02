@@ -34,37 +34,24 @@ def ensure_cache_file():
 # Function to load cache
 def load_cache():
     ensure_cache_file()
-    try:
-        with open(CACHE_FILE, 'r') as f:
-            print(f"Loading cache from file: {CACHE_FILE}")
-            cache = json.load(f)
-            print(f"Cache content loaded: {json.dumps(cache, indent=2)}")
-            return cache
-    except json.JSONDecodeError as e:
-        print(f"Error decoding JSON from cache file: {e}")
-        return {}
-    except FileNotFoundError as e:
-        print(f"Cache file not found: {e}")
-        return {}
+    with open(CACHE_FILE, 'r') as f:
+        print(f"Loading cache from file: {CACHE_FILE}")
+        cache = json.load(f)
+        print(f"Cache content loaded: {cache}")
+        return cache
 
 # Function to save cache
 def save_cache(cache):
-    try:
-        with open(CACHE_FILE, 'w') as f:
-            json.dump(cache, f)
-        print(f"Cache saved to file: {CACHE_FILE}")
-        print_cache()
-    except Exception as e:
-        print(f"Error saving cache to file: {e}")
+    with open(CACHE_FILE, 'w') as f:
+        json.dump(cache, f)
+    print(f"Cache saved to file: {CACHE_FILE}")
+    print_cache()
 
 # Function to print cache
 def print_cache():
-    try:
-        with open(CACHE_FILE, 'r') as f:
-            cache_content = json.load(f)
-            print(f"Cache content: {json.dumps(cache_content, indent=2)}")
-    except Exception as e:
-        print(f"Error reading cache file: {e}")
+    with open(CACHE_FILE, 'r') as f:
+        cache_content = json.load(f)
+        print(f"Cache content: {json.dumps(cache_content, indent=2)}")
 
 # Function to send a message to a Telegram chat
 def send_telegram_message(message):
@@ -89,9 +76,7 @@ def fetch_rss_feed(etag=None, modified=None):
     if modified:
         headers['If-Modified-Since'] = modified
     
-    print(f"Fetching RSS feed with headers: {headers}")  # Debugging: Print the headers being used
     response = requests.get(RSS_FEED_URL, headers=headers)
-    print(f"RSS feed fetch response status: {response.status_code}")  # Debugging: Print the response status
     response.raise_for_status()
     
     feed = feedparser.parse(response.content)
@@ -115,10 +100,8 @@ def send_rss_to_telegram():
     # Update cache with new etag and modified values if they exist in the feed
     if 'etag' in feed:
         cache['etag'] = feed.etag
-        print(f"Updated cache with new etag: {feed.etag}")  # Debugging: Print the new etag
     if 'modified' in feed:
         cache['modified'] = feed.modified
-        print(f"Updated cache with new modified: {feed.modified}")  # Debugging: Print the new modified date
 
     new_entries = []
     for entry in feed.entries:
@@ -148,7 +131,6 @@ def send_rss_to_telegram():
                 tag.decompose()
         description_text = soup.get_text()
         message = f"<b>{title}</b>\n{link}\n\n{description_text}"
-        print(f"Sending message: {message}")  # Debugging: Print the message being sent
         send_telegram_message(message)
         print(f"Message sent: {title}")
 
@@ -162,4 +144,4 @@ def main():
     send_rss_to_telegram()
 
 if __name__ == "__main__":
-    main(
+    main()
