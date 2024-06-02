@@ -8,29 +8,24 @@ from bs4 import BeautifulSoup
 TELEGRAM_BOT_TOKEN = os.getenv('TELEGRAM_BOT_TOKEN')
 RSS_FEED_URL = os.getenv('RSS_FEED_URL')
 CHAT_ID = os.getenv('TELEGRAM_CHAT_ID')
+CACHE_FILE_PATH = "cache.json"
 
-# URL for cache file
-CACHE_URL = "https://raw.githubusercontent.com/Launacloud/testingtorsstg/main/cache.json"
-
-# Function to load cache from the specified URL
+# Function to load cache from the local file
 def load_cache():
-    response = requests.get(CACHE_URL)
-    response.raise_for_status()
-    cache = response.json()
-    print(f"Cache loaded from URL: {CACHE_URL}")
+    if os.path.exists(CACHE_FILE_PATH):
+        with open(CACHE_FILE_PATH, 'r') as cache_file:
+            cache = json.load(cache_file)
+        print(f"Cache loaded from file: {CACHE_FILE_PATH}")
+    else:
+        cache = {}
+        print(f"No cache file found. Starting with an empty cache.")
     return cache
 
-# Function to save cache to the specified URL
+# Function to save cache to the local file
 def save_cache(cache):
-    response = requests.put(CACHE_URL, json=cache)
-    response.raise_for_status()
-    print(f"Cache saved to URL: {CACHE_URL}")
-    print_cache()
-
-# Ensure cache directory exists
-def ensure_cache_file():
-    os.makedirs(CACHE_DIR, exist_ok=True)
-    print(f"Cache directory ensured: {CACHE_DIR}")
+    with open(CACHE_FILE_PATH, 'w') as cache_file:
+        json.dump(cache, cache_file)
+    print(f"Cache saved to file: {CACHE_FILE_PATH}")
 
 # Function to send a message to a Telegram chat
 def send_telegram_message(message):
@@ -62,6 +57,12 @@ def fetch_rss_feed(etag=None, modified=None):
     feed.status = response.status_code
     return feed
 
+# Function to load and compare file with RSS items
+def load_and_compare_file(file_path):
+    with open(file_path, 'r') as file:
+        file_content = file.read().strip()
+    return file_content
+
 # Function to send RSS feed items to Telegram
 def send_rss_to_telegram():
     cache = load_cache()
@@ -84,6 +85,9 @@ def send_rss_to_telegram():
         cache['etag'] = feed.etag
     if 'modified' in feed:
         cache['modified'] = feed.modified
+
+    # Load local file content for comparison
+    local_file_content = load_and_compare_file('local_file.txt')  # Replace with actual file path
 
     new_entries = []
     for entry in feed.entries:
@@ -112,9 +116,12 @@ def send_rss_to_telegram():
             if tag.name not in supported_tags:
                 tag.decompose()
         description_text = soup.get_text()
-        message = f"<b>{title}</b>\n{link}\n\n{description_text}"
-        send_telegram_message(message)
-        print(f"Message sent: {title}")
+
+        # Compare with local file content
+        if local_file_content in description_text:
+            message = f"<b>{title}</b>\n{link}\n\n{description_text}"
+            send_telegram_message(message)
+            print(f"Message sent: {title}")
 
         # Update last_entry_id in cache after sending the message
         cache['last_entry_id'] = entry_id
