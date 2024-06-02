@@ -4,6 +4,7 @@ on:
   schedule:
     - cron: '*/15 * * * *'  # Runs every 15
   workflow_dispatch:  # Allows manual triggering from the GitHub Actions tab
+  push:
 
 jobs:
   rss_to_telegram:
