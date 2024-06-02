@@ -1,5 +1,3 @@
-{
-  "etag": "example_etag",
+{"etag": "example_etag",
   "modified": "example_modified",
-  "last_entry_id": "example_last_entry_id"
-}
+  "last_entry_id": "example_last_entry_id"}
