@@ -66,7 +66,22 @@ def send_telegram_message(message):
     if response.status_code != 200:
         raise Exception(f"Error sending message: {response.text}")
 
-# Function to send RSS feed items to Telegram with conditional requests
+# Function to fetch RSS feed with conditional requests
+def fetch_rss_feed(etag=None, modified=None):
+    headers = {}
+    if etag:
+        headers['If-None-Match'] = etag
+    if modified:
+        headers['If-Modified-Since'] = modified
+    
+    response = requests.get(RSS_FEED_URL, headers=headers)
+    response.raise_for_status()
+    
+    feed = feedparser.parse(response.content)
+    feed.status = response.status_code
+    return feed
+
+# Function to send RSS feed items to Telegram
 def send_rss_to_telegram():
     cache = load_cache()
     etag = cache.get('etag')
@@ -80,9 +95,11 @@ def send_rss_to_telegram():
         print("No new entries.")
         return
 
-    # Update cache with new etag and modified values
-    cache['etag'] = feed.get('etag')
-    cache['modified'] = feed.get('modified')
+    # Update cache with new etag and modified values if they exist in the feed
+    if 'etag' in feed:
+        cache['etag'] = feed.etag
+    if 'modified' in feed:
+        cache['modified'] = feed.modified
 
     new_entries = []
     for entry in feed.entries:
@@ -115,14 +132,14 @@ def send_rss_to_telegram():
         send_telegram_message(message)
         print(f"Message sent: {title}")
 
-        if last_entry_id and entry_id == last_entry_id:
-            print("Stopping script as last_entry_id matches current entry")
-            save_cache(cache)
-            return
+        # Update last_entry_id in cache after sending the message
+        cache['last_entry_id'] = entry_id
 
-        # Main function
-        def main():
-            send_rss_to_telegram()
+    save_cache(cache)
 
-        if __name__ == "__main__":
-            main()
+# Main function
+def main():
+    send_rss_to_telegram()
+
+if __name__ == "__main__":
+    main()
