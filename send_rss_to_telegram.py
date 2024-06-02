@@ -19,6 +19,7 @@ os.makedirs(CACHE_DIR, exist_ok=True)
 
 print(f"Using cache directory: {CACHE_DIR}")
 print(f"Using cache file: {CACHE_FILE}")
+print(f"Cache content loaded: {cache}
 
 # Ensure cache directory and file exist
 def ensure_cache_file():
@@ -82,6 +83,13 @@ def fetch_rss_feed(etag=None, modified=None):
     feed = feedparser.parse(response.content)
     feed.status = response.status_code
     return feed
+
+# Function to save cache
+def save_cache(cache):
+    with open(CACHE_FILE, 'w') as f:
+        json.dump(cache, f)
+    print(f"Cache saved to file: {CACHE_FILE}")
+    print_cache()
 
 # Function to send RSS feed items to Telegram
 def send_rss_to_telegram():
