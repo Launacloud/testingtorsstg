@@ -124,8 +124,8 @@ def send_rss_to_telegram():
     for entry in feed.entries:
         entry_id = entry.get('id', entry.get('link')).strip()  # Use link if id is not present and strip whitespace
         print(f"Processing entry with id: {entry_id}")
-        if last_entry_id and entry_id <= last_entry_id:
-            print(f"Stopping processing as entry id: {entry_id} matches or is not newer than last_entry_id: {last_entry_id}")
+        if last_entry_id and entry_id == last_entry_id:
+            print(f"Stopping processing as entry id: {entry_id} matches last_entry_id: {last_entry_id}")
             break  # Stop processing further entries
         new_entries.append(entry)
 
@@ -162,4 +162,4 @@ def main():
     send_rss_to_telegram()
 
 if __name__ == "__main__":
-    main()
+    main(
