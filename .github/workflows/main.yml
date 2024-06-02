@@ -18,12 +18,12 @@ jobs:
       with:
         python-version: '3.x'
 
-    - name: Ensure cache directory and file
-      run: |
-        mkdir -p $GITHUB_WORKSPACE/cache
-        if [ ! -f "$GITHUB_WORKSPACE/cache/feed_cache.json" ]; then
-          echo '{}' > "$GITHUB_WORKSPACE/cache/feed_cache.json"
-        fi
+    #- name: Ensure cache directory and file
+      #run: |
+        #mkdir -p $GITHUB_WORKSPACE/cache
+        #if [ ! -f "$GITHUB_WORKSPACE/cache/feed_cache.json" ]; then
+       #   echo '{}' > "$GITHUB_WORKSPACE/cache/feed_cache.json"
+        #fi
 
     - name: Install dependencies
       run: |
