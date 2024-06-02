@@ -1,41 +1,49 @@
-name: RSS to Telegram
+name: RSS Feed Processor
 
 on:
   schedule:
-    - cron: '*/15 * * * *'  # Runs every 15
-  workflow_dispatch:  # Allows manual triggering from the GitHub Actions tab
-  push:
+    - cron: '0 * * * *'  # Runs every hour
+  workflow_dispatch:
 
 jobs:
-  rss_to_telegram:
+  build:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout repository
-      uses: actions/checkout@v2
+    - name: Check out repository
+      uses: actions/checkout@v4
 
     - name: Set up Python
-      uses: actions/setup-python@v2
+      uses: actions/setup-python@v4
       with:
-        python-version: '3.x'
+        python-version: '3.9'
 
-    #- name: Ensure cache directory and file
-      #run: |
-        #mkdir -p $GITHUB_WORKSPACE/cache
-        #if [ ! -f "$GITHUB_WORKSPACE/cache/feed_cache.json" ]; then
-       #   echo '{}' > "$GITHUB_WORKSPACE/cache/feed_cache.json"
-        #fi
+    - name: Cache pip
+      uses: actions/cache@v3
+      with:
+        path: ~/.cache/pip
+        key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
+        restore-keys: |
+          ${{ runner.os }}-pip-
 
     - name: Install dependencies
-      run: |
-        python -m pip install --upgrade pip
-        pip install -r requirements.txt
+      run: pip install -r requirements.txt
 
-    - name: Run the RSS to Telegram script
+    - name: Run RSS Feed Processor
+      run:  python send_rss_to_telegram.py
       env:
         TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
         RSS_FEED_URL: ${{ secrets.RSS_FEED_URL }}
         TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
-        GITHUB_WORKSPACE: ${{ github.workspace }}
+
+    - name: Commit cache file
       run: |
-        python send_rss_to_telegram.py
+        git config --global user.name 'github-actions'
+        git config --global user.email 'github-actions@github.com'
+        git add cache.json
+        git commit -m 'Update cache file'
+        git push
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+
