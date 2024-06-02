@@ -19,7 +19,6 @@ os.makedirs(CACHE_DIR, exist_ok=True)
 
 print(f"Using cache directory: {CACHE_DIR}")
 print(f"Using cache file: {CACHE_FILE}")
-print(f"Cache content loaded: '{cache}'
 
 # Ensure cache directory and file exist
 def ensure_cache_file():
