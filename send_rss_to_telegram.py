@@ -89,6 +89,9 @@ def send_rss_to_telegram():
     etag = cache.get('etag')
     modified = cache.get('modified')
     last_entry_id = cache.get('last_entry_id', None)  # Initialize last_entry_id if not present
+    
+    print("Previous etag:", etag)
+    print("Previous modified:", modified)
 
     print(f"Loading feed with etag: {etag} and modified: {modified}")
     feed = fetch_rss_feed(etag=etag, modified=modified)
@@ -137,6 +140,7 @@ def send_rss_to_telegram():
         # Update last_entry_id in cache after sending the message
         cache['last_entry_id'] = entry_id
 
+    # Save etag, modified, and last_entry_id to cache
     save_cache(cache)
 
 # Main function
