@@ -11,7 +11,7 @@ def send_rss_to_telegram():
     print(f"Loading feed with etag: {etag} and modified: {modified}")
     feed = fetch_rss_feed(etag=etag, modified=modified)
 
-    if feed.status == 304:
+    if feed.status == 304.:
         print("No new entries.")
         return
 
