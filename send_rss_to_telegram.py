@@ -88,7 +88,7 @@ def send_rss_to_telegram():
         entry_id = entry.get('id', entry.get('link')).strip()  # Use link if id is not present and strip whitespace
         print(f"Processing entry with id: {entry_id}")
         if last_entry_id and entry_id == last_entry_id:
-            print(f"Found the last processed entry with id: {entry_id}.")
+            print(f"Found the last processed entry with id: {entry_id}. Stopping further collection.")
             stop_processing = True
         if not stop_processing:
             new_entries.append(entry)
