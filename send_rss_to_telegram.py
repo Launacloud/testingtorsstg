@@ -83,19 +83,22 @@ def send_rss_to_telegram():
         cache['modified'] = feed.modified
 
     new_entries = []
+    stop_processing = False
     for entry in feed.entries:
         entry_id = entry.get('id', entry.get('link')).strip()  # Use link if id is not present and strip whitespace
         print(f"Processing entry with id: {entry_id}")
         if last_entry_id and entry_id == last_entry_id:
-            print(f"Found the last processed entry with id: {entry_id}. Stopping further collection.")
-            break  # Stop collecting new entries when the last processed entry is found
-        new_entries.append(entry)
+            print(f"Found the last processed entry with id: {entry_id}.")
+            stop_processing = True
+        if not stop_processing:
+            new_entries.append(entry)
 
     if not new_entries:
         print("No new entries to process.")
         return
 
-    for entry in reversed(new_entries):  # Process entries in reverse order to handle newer entries first
+    # Process entries in reverse order to handle newer entries first
+    for entry in reversed(new_entries):
         entry_id = entry.get('id', entry.get('link')).strip()  # Use link if id is not present and strip whitespace
         title = entry.title
         link = entry.get('link', entry.get('url'))  # Get link or url
@@ -123,9 +126,8 @@ def send_rss_to_telegram():
         # Update last_entry_id in cache after sending the message
         cache['last_entry_id'] = entry_id
 
-    # Save etag, modified, and last_entry_id to cache only if there are new entries
-    if new_entries:
-        save_cache(cache)
+    # Save cache if there are new entries
+    save_cache(cache)
 
 # Main function
 def main():
