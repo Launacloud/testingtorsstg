@@ -39,8 +39,12 @@ jobs:
 
     - name: Commit changes
       run: |
-        git add feed_cache.json
-        git commit -m "Update feed cache"
-        git push
+        if [[ `git status --porcelain` ]]; then
+          git add feed_cache.json
+          git commit -m "Update feed cache"
+          git push
+        else
+          echo "No changes to commit"
+        fi
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
