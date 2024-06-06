@@ -102,22 +102,30 @@ def send_rss_to_telegram():
         description = entry.get('content_html', entry.get('description'))  # Get content_html or description
 
         # Use BeautifulSoup to extract text from HTML description and filter out unsupported tags
-        soup = BeautifulSoup(description, 'html.parser')
-        supported_tags = ['b', 'i', 'a']  # Supported tags: bold, italic, anchor
-        # Filter out unsupported tags
-        for tag in soup.find_all():
-            if tag.name not in supported_tags:
-                tag.decompose()
-        description_text = soup.get_text()
-        message = f"<b>{title}</b>\n{link}\n\n{description_text}"
+        if description:
+            soup = BeautifulSoup(description, 'html.parser')
+            supported_tags = ['b', 'i', 'a']  # Supported tags: bold, italic, anchor
+            for tag in soup.find_all():
+                if tag.name not in supported_tags:
+                    tag.decompose()
+            description_text = soup.prettify()
+        else:
+            description_text = "No description available."
+
+        print(f"Title: {title}")
+        print(f"Link: {link}")
+        print(f"Description: {description_text}")
+
+        message = f"<b>{title}</b>\n<a href='{link}'>{link}</a>\n\n{description_text}"
         send_telegram_message(message)
         print(f"Message sent: {title}")
 
         # Update last_entry_id in cache after sending the message
         cache['last_entry_id'] = entry_id
 
-    # Save etag, modified, and last_entry_id to cache
-    save_cache(cache)
+    # Save etag, modified, and last_entry_id to cache only if there are new entries
+    if new_entries:
+        save_cache(cache)
 
 # Main function
 def main():
