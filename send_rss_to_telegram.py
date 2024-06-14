@@ -1,137 +1,112 @@
-from bs4 import BeautifulSoup
 import os
-import requests
-import feedparser
 import json
+from datetime import datetime
+from urllib.parse import urljoin
+import requests
+from feedgen.feed import FeedGenerator
+from bs4 import BeautifulSoup
+import feedparser
 
-# Load environment variables
-TELEGRAM_BOT_TOKEN = os.getenv('TELEGRAM_BOT_TOKEN')
-RSS_FEED_URL = os.getenv('RSS_FEED_URL')
-CHAT_ID = os.getenv('TELEGRAM_CHAT_ID')
+from feed import feeds
 
-# Cache file path
-CACHE_FILE_PATH = 'feed_cache.json'
+def generate_feed(feed_config):
+    r = requests.get(feed_config["url"])
+    soup = BeautifulSoup(r.text, 'html.parser')
 
-# Function to load cache from the file
-def load_cache():
-    if os.path.exists(CACHE_FILE_PATH):
-        with open(CACHE_FILE_PATH, 'r') as file:
-            cache = json.load(file)
-            print(f"Cache loaded from file: {CACHE_FILE_PATH}")
-            return cache
-    else:
-        print("No cache file found. Starting with an empty cache.")
-        return {}
+    titles = soup.select(feed_config["item_title_css"])
+    urls = soup.select(feed_config["item_url_css"])
+    descriptions = soup.select(feed_config["item_description_css"]) if feed_config["item_description_css"] else []
+    authors = soup.select(feed_config["item_author_css"]) if feed_config["item_author_css"] else []
+    dates = soup.select(feed_config["item_date_css"]) if feed_config["item_date_css"] else []
+    extras = soup.select(feed_config["item_extra_css"]) if "item_extra_css" in feed_config else []
+    extras2 = soup.select(feed_config["item_extra_css2"]) if "item_extra_css2" in feed_config else []
 
-# Function to save cache to the file
-def save_cache(cache):
-    with open(CACHE_FILE_PATH, 'w') as file:
-        json.dump(cache, file, indent=4)
-    print(f"Cache saved to file: {CACHE_FILE_PATH}")
+    fg = FeedGenerator()
+    fg.id(feed_config["url"])
+    fg.title(feed_config["title"])
+    fg.subtitle(feed_config["subtitle"])
+    fg.link(href=feed_config["url"], rel='alternate')
+    fg.language(feed_config["language"])
+    fg.author({'name': feed_config["author_name"], 'email': feed_config["author_email"]})
 
-# Function to send a message to a Telegram chat
-def send_telegram_message(message):
-    url = f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/sendMessage"
-    payload = {
-        'chat_id': CHAT_ID,
-        'text': message,
-        'parse_mode': 'HTML',
-        'disable_web_page_preview': 'false'  # Enable link previews
-    }
-    response = requests.post(url, data=payload)
-    print(f"Response status code: {response.status_code}")
-    print(f"Response text: {response.text}")
-    if response.status_code != 200:
-        raise Exception(f"Error sending message: {response.text}")
+    atom_file_path = os.path.join(feed_config["output_path"], 'atom.xml')
+    existing_ids = set()  # To track existing entry IDs
+    output_data = []
 
-# Function to fetch RSS feed with conditional requests
-def fetch_rss_feed(etag=None, modified=None):
-    headers = {}
-    if etag:
-        headers['If-None-Match'] = etag
-    if modified:
-        headers['If-Modified-Since'] = modified
-    
-    response = requests.get(RSS_FEED_URL, headers=headers)
-    response.raise_for_status()
-    
-    feed = feedparser.parse(response.content)
-    feed.status = response.status_code
-    return feed
+    # Load existing entries if the XML file exists
+    if os.path.exists(atom_file_path):
+        existing_feed = feedparser.parse(atom_file_path)
+        for entry in existing_feed.entries:
+            fe = fg.add_entry()
+            fe.id(entry.id)
+            fe.title(entry.title)
+            fe.link(href=entry.link)
+            fe.description(entry.description)
+            if hasattr(entry, 'author'):
+                fe.author(name=entry.author)
+            if hasattr(entry, 'published'):
+                fe.published(entry.published)
 
-# Function to send RSS feed items to Telegram
-def send_rss_to_telegram():
-    cache = load_cache()
-    etag = cache.get('etag')
-    modified = cache.get('modified')
-    last_entry_id = cache.get('last_entry_id', None)  # Initialize last_entry_id if not present
-    
-    print("Previous etag:", etag)
-    print("Previous modified:", modified)
+            entry_data = {
+                "Title": entry.title,
+                "ID": entry.id,
+                "Description": entry.description
+            }
+            if hasattr(entry, 'author'):
+                entry_data["Author"] = entry.author
+            output_data.append(entry_data)
+            existing_ids.add(entry.id)  # Add ID to the set
 
-    print(f"Loading feed with etag: {etag} and modified: {modified}")
-    feed = fetch_rss_feed(etag=etag, modified=modified)
+    min_len = min(len(titles), len(urls) or len(titles), len(descriptions) or len(titles), len(authors) or len(titles), len(dates) or len(titles), len(extras) or len(titles), len(extras2) or len(titles))
 
-    if feed.status == 304:
-        print("No new entries.")
-        return
+    for i in range(min_len):
+        item_url = urljoin(feed_config["url"], urls[i].get('href')) if urls else feed_config["url"]
 
-    # Update cache with new etag and modified values if they exist in the feed
-    if 'etag' in feed:
-        cache['etag'] = feed.etag
-    if 'modified' in feed:
-        cache['modified'] = feed.modified
+        if item_url in existing_ids:
+            continue  # Skip if the entry already exists
 
-    new_entries = []
-    stop_processing = False
-    for entry in reversed(feed.entries):  # Process entries in reverse order
-        entry_id = entry.get('id', entry.get('link')).strip()  # Use link if id is not present and strip whitespace
-        print(f"Processing entry with id: {entry_id}")
-        if last_entry_id and entry_id == last_entry_id:
-            print(f"Found the last processed entry with id: {entry_id}. Stopping further collection.")
-            stop_processing = True
-        if not stop_processing:
-            new_entries.append(entry)
+        fe = fg.add_entry()
+        fe.title(titles[i].text)
+        fe.id(item_url)
+        fe.link(href=item_url, rel='alternate')
 
-    if not new_entries:
-        print("No new entries to process.")
-        return
+        description_text = descriptions[i].text if i < len(descriptions) else "No description found"
+        description_text = BeautifulSoup(description_text, 'html.parser').text.strip()
 
-    # Process entries in reverse order to handle newer entries first
-    for entry in reversed(new_entries):
-        entry_id = entry.get('id', entry.get('link')).strip()  # Use link if id is not present and strip whitespace
-        title = entry.title
-        link = entry.get('link', entry.get('url'))  # Get link or url
-        description = entry.get('content_html', entry.get('description'))  # Get content_html or description
+        if extras:
+            extra_text = extras[i].text if i < len(extras) else "No extra information found"
+            description_text += f"\n\nExtra 1: {extra_text}"
+        
+        if extras2:
+            extra2_text = extras2[i].text if i < len(extras2) else "No second extra information found"
+            description_text += f"\n\nExtra 2: {extra2_text}"
 
-        # Use BeautifulSoup to extract text from HTML description and filter out unsupported tags
-        if description:
-            soup = BeautifulSoup(description, 'html.parser')
-            supported_tags = ['b', 'i', 'a']  # Supported tags: bold, italic, anchor
-            for tag in soup.find_all():
-                if tag.name not in supported_tags:
-                    tag.decompose()
-            description_text = soup.prettify()
-        else:
-            description_text = "No description available."
+        fe.description(description_text)
 
-        print(f"Title: {title}")
-        print(f"Link: {link}")
-        print(f"Description: {description_text}")
+        if authors:
+            author_text = authors[i].text if i < len(authors) else "No author found"
+            fe.author(name=author_text)
 
-        message = f"<b>{title}</b>\n<a href='{link}'>{link}</a>\n\n{description_text}"
-        send_telegram_message(message)
-        print(f"Message sent: {title}")
+        entry_data = {
+            "Title": titles[i].text,
+            "ID": item_url,
+            "Description": description_text
+        }
+        if authors:
+            entry_data["Author"] = author_text
+        output_data.append(entry_data)
 
-        # Update last_entry_id in cache after sending the message
-        cache['last_entry_id'] = entry_id
+    output_path = feed_config["output_path"]
+    os.makedirs(output_path, exist_ok=True)
 
-    # Save cache if there are new entries
-    save_cache(cache)
+    fg.atom_file(atom_file_path)
 
-# Main function
-def main():
-    send_rss_to_telegram()
+    json_file_path = os.path.join(output_path, 'feed.json')
+    with open(json_file_path, 'w') as json_file:
+        json.dump(output_data, json_file, indent=4)
 
-if __name__ == "__main__":
-    main()
+    print(f"XML file '{atom_file_path}' updated successfully.")
+    print(f"JSON file '{json_file_path}' created successfully.")
+
+for feed_config in feeds:
+    generate_feed(feed_config)
